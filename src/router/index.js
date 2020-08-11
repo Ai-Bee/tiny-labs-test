@@ -10,7 +10,8 @@ export default new Router({
     {
       path: '/',
       name: 'welcomeForm',
-      component: welcomeForm
+      component: welcomeForm,
+      props: true
     },
     {
       path: '/employeesPage',

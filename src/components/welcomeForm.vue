@@ -65,7 +65,6 @@
 </template>
 
 <script>
-import { ourEventBus } from '../main'
 export default {
   name: 'welcomeForm',
   data () {
@@ -80,11 +79,11 @@ export default {
   },
   methods: {
     submitForm () {
-      console.log(this.formDetails['firstName'])
+    //  console.log(this.formDetails['firstName'])
       let name = this.formDetails['firstName'] || this.formDetails['lastName']
       if (name) {
-        ourEventBus.$emit('userLoggedIn', name)
-        this.$router.push('/employeesPage')
+        console.log(name)
+        this.$router.push({name: 'employeesPage', params: {name}})
       }
     }
   }

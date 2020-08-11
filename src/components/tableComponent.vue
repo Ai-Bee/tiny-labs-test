@@ -14,7 +14,8 @@
        <p  class="col">ROLE</p>
        <p  class="col-md-1"></p>
      </div>
-       <div v-for="(item, index) in data" class="ml-1 pt-2 px-3 row table-row justify-content-between" :key="index">
+     <section v-if="one">
+       <div v-for="(item, index) in data.slice(0,5)" class="ml-1 pt-2 px-3 row table-row justify-content-between" :key="index">
             <div @click="toggleSelection(item)">
                    <span class="col-md-1" v-if="item.icon"> <img class="index" src="../assets/selected.png"> </span>
          <span class="col-md-1" v-else> <img class="index" src="../assets/deselected.png"> </span>
@@ -26,11 +27,28 @@
        <p  class="col">{{item.role}}</p>
        <span class="col-md-1" @click="deleteRecord(item._id)"><img class="index" src="../assets/trash.png"></span>
        </div>
+     </section>
+     <section v-else>
+        <div v-for="(item, index) in data.slice(6)" class="ml-1 pt-2 px-3 row table-row justify-content-between" :key="index">
+            <div @click="toggleSelection(item)">
+                   <span class="col-md-1" v-if="item.icon"> <img class="index" src="../assets/selected.png"> </span>
+         <span class="col-md-1" v-else> <img class="index" src="../assets/deselected.png"> </span>
+            </div>
+       <p  class="col">{{item.first}}</p>
+       <p  class="col"> {{item.last}}</p>
+       <p  class="col">{{item.email}}</p>
+       <p  class="col">{{item.number}}</p>
+       <p  class="col">{{item.role}}</p>
+       <span class="col-md-1" @click="deleteRecord(item._id)"><img class="index" src="../assets/trash.png"></span>
+       </div>
+     </section>
 </div>
 </template>
 
 <script>
 import axios from 'axios'
+import { ourEventBus } from '../main'
+
 export default {
   name: 'tableComponent',
   props: {
@@ -41,108 +59,168 @@ export default {
       marked: [],
       index: false,
       data: [],
-      pageTwo: []
+      pageTwo: [],
+      temp: [],
+      one: true
     }
   },
   methods: {
     selectAll () {
-    //  let temp = this.data
-      // if (this.index) {
-      //   console.log('true')
-      //   this.data.map(el => el.icon = true)
-      //   this.index = false
-      // } else {
-      //   console.log('false')
-      //   this.data.map(el =>return  el.icon = false)
-      //   this.index = true
-      // }
+      // let temp = this.data
+      if (this.index) {
+        this.data.map(el => { el.icon = true })
+        this.index = false
+      } else {
+        this.data.map(el => { el.icon = false })
+        this.index = true
+      }
     },
     deleteRecord (employeeId) {
       console.log(employeeId)
       axios.delete(`https://crudcrud.com/api/17df3ba5d3784cb887ec4d437a9f1a06/employees/${employeeId}`).then((res) => {
         let temp = this.data
         this.data = temp.filter(el => el._id !== employeeId)
+        this.temp = this.data
+        this.$emit('updateList', this.data)
       }, (error) => {
         console.log(error)
       })
     },
     toggleSelection (employee) {
-      let valueUpdate = this.data
-      valueUpdate.map(item => {
-        if (item._id === employee._id) {
-          if (item.icon) {
-            item.icon = false
-          } else {
-            item.icon = true
-          }
-        }
-      })
-      this.data = valueUpdate
+      if (employee.icon) {
+        employee.icon = false
+      } else {
+        employee.icon = true
+      }
     }
   },
-  mounted () {
-    //     let arrt = [
-    //       {
-    //         icon: 'rue,
-    //         first: 'Joshua',
-    //         last: 'Bakare',
-    //         email: 'josh.bakery@gmail.com',
-    //         number: '+2348012345678',
-    //         role: 'Admin'
-    //       },
-    //       {
-    //         icon: 'alse,
-    //         first: 'Josh',
-    //         last: 'Baks',
-    //         email: 'josh.bakery@gmail.com',
-    //         number: '+2348012345678',
-    //         role: 'Admin'
-    //       },
-    //       {
-    //         icon: 'rue,
-    //         first: 'Pink',
-    //         last: 'Longhorn',
-    //         email: 'josh.bakery@gmail.com',
-    //         number: '+2348012345678',
-    //         role: 'Admin'
-    //       },
-    //       {
-    //         icon: false,
-    //         first: 'Mary',
-    //         last: 'Poppins',
-    //         email: 'josh.bakery@gmail.com',
-    //         number: '+2348012345678',
-    //         role: 'Admin'
-    //       }
-    //     ]
-    //     arrt.map(el => {
-    //       axios
-    //         .post('https://crudcrud.com/api/17df3ba5d3784cb887ec4d437a9f1a06/employees', el)
-    //         .then(response => {
-    //              this.data.push(response.data)
-    //              console.log(response) })
-    //     })
-    axios.get('https://crudcrud.com/api/17df3ba5d3784cb887ec4d437a9f1a06/employees').then((response) => {
-      this.data = response.data
-    }, (error) => {
-      console.log(error)
+  created () {
+    ourEventBus.$on('filteredData', (val) => {
+      if (val !== 'No data') {
+        this.data = []
+        this.data = val
+        console.log(val)
+      } else {
+        this.data = this.temp
+      }
+    })
+    ourEventBus.$on('togglePage', () => {
+      if (this.data.length > 5) { this.one = !this.one }
     })
   },
+  mounted () {
+    let arrt = [
+      {
+        icon: true,
+        first: 'Joshua',
+        last: 'Bakare',
+        email: 'josh.bakery@gmail.com',
+        number: '+2348012345678',
+        role: 'Admin'
+      },
+      {
+        icon: false,
+        first: 'Josh',
+        last: 'Baks',
+        email: 'josh.bakery@gmail.com',
+        number: '+2348012345678',
+        role: 'Admin'
+      },
+      {
+        icon: true,
+        first: 'Pink',
+        last: 'Longhorn',
+        email: 'josh.bakery@gmail.com',
+        number: '+2348012345678',
+        role: 'Admin'
+      },
+      {
+        icon: false,
+        first: 'Mary',
+        last: 'Poppins',
+        email: 'josh.bakery@gmail.com',
+        number: '+2348012345678',
+        role: 'Admin'
+      },
+      {
+        icon: true,
+        first: 'Adeyinka',
+        last: 'Shuga',
+        email: 'josh.bakery@gmail.com',
+        number: '+2348012345678',
+        role: 'Admin'
+      },
+      {
+        icon: false,
+        first: 'Maryam',
+        last: 'Bature',
+        email: 'josh.bakery@gmail.com',
+        number: '+2348012345678',
+        role: 'Admin'
+      },
+      {
+        icon: true,
+        first: 'Nikki',
+        last: 'Reed',
+        email: 'josh.bakery@gmail.com',
+        number: '+2348012345678',
+        role: 'Admin'
+      },
+      {
+        icon: false,
+        first: 'Todd',
+        last: 'Dunley',
+        email: 'josh.bakery@gmail.com',
+        number: '+2348012345678',
+        role: 'Admin'
+      },
+      {
+        icon: false,
+        first: 'David',
+        last: 'Papaye',
+        email: 'josh.bakery@gmail.com',
+        number: '+2348012345678',
+        role: 'Admin'
+      }
+    ]
+    this.data = arrt
+    ourEventBus.$emit('updateList', this.data)
+    this.temp = arrt
+    // arrt.map(el => {
+    //   axios
+    //     .post('https://crudcrud.com/api/17df3ba5d3784cb887ec4d437a9f1a06/employee', el)
+    //     .then(response => {
+    //       this.data.push(response.data)
+    //       console.log(response)
+    //     })
+    // })
+    // axios.get('https://crudcrud.com/api/17df3ba5d3784cb887ec4d437a9f1a06/employees').then((response) => {
+    //   this.data = response.data
+    //   this.temp = arrt
+    //   // this.$emit('updateList', this.data)
+    // }, (error) => {
+    //   console.log(error)
+    // })
+  },
   computed: {
+    // filteredNames: function () {
+    //   return this.data.filter((name)=>{
+    //     return
+    //   })
+    // },
     anyTruthy: function () {
-      return this.data.some(el => !el.icon)
+      let truth = this.data.some(el => !el.icon)
+      return truth
     }
   },
   watch: {
     data (val) {
-      console.log(val)
     },
     async selectedRole (val) {
       let chosen = this.data.filter(el => el.icon)
       console.log(chosen)
       await chosen.map(el => {
         el.role = val
-        console.log(el)
         axios.put(`https://crudcrud.com/api/17df3ba5d3784cb887ec4d437a9f1a06/employees/${el._id}`, el).then((response) => {
           console.log(response)
         }, (error) => {

@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 <template>
      <div id="wholePage">
        <nav class="col-sm-1 d-none d-sm-block sidebar pt-4 mt-4">
@@ -20,7 +21,7 @@
   </a>
     <div class="navbar-text pr-4">
       <p class="nav-item dropdown">
-                  <a class="dropdown-toggle"  type="button" data-toggle="dropdown" data-hover="dropdown"><span class="user-icon"><img src='../assets/Rectangle.png'></span> Hi, {{username}} <span class="caret"></span></a>
+                  <a class="dropdown-toggle"  type="button" data-toggle="dropdown" data-hover="dropdown"><span class="user-icon"><img src='../assets/Rectangle.png'></span> Hi, {{ username }} <span class="caret"></span></a>
                   <ul class="dropdown-menu user">
                       <li class="nav-item"> One Option</li>
                       <li class="nav-item"> Another Option</li>
@@ -47,13 +48,14 @@
                   <option value="Staff">Staff</option>
               </select>
                 <button type="button" class="col mx-2 btn btn-success" @click="updateRole(role)">Change</button>
-                <input type="search" class="col-md-6 form-control" placeholder="Enter staff name here…" >
+                <input type="search" v-model="searchInput" @input="updateList" class="col-md-6 form-control" placeholder="Enter staff name here…" >
               </div>
-              <div class="col-md-2">
-                The pagination
+              <div class="col-md-2 pagination">
+                <!--  eslint-disable-next-line vue/no-parsing-error -->
+                 <span class="left mx-2 px-1" @click="togglePage"><</span><span @click="togglePage" class="px-1 right">></span>
               </div>
             </div>
-            <table-component :selectedRole="selectedRole"></table-component>
+            <table-component :selectedRole="selectedRole" ></table-component>
         </div>
      </div>
 </template>
@@ -66,17 +68,28 @@ export default {
   components: {
     'table-component': tableComponent
   },
-  data () {
+  data: function () {
     return {
-      username: 'Stranger',
-      role: '',
-      selectedRole: ''
+      username: 'Fool',
+      role: 'Change Role',
+      selectedRole: '',
+      searchInput: '',
+      dataList: []
     }
   },
-  asyncmounted () {
-    // Listen for this event properly
-    ourEventBus.$on('userLoggedIn', (info) => {
-      this.username = info
+  async mounted () {
+
+  },
+  async beforeRouteEnter (to, from, next) {
+    next(vm => {
+      vm.username = vm.$route.params.name
+    })
+  },
+  async created () {
+    ourEventBus.$on('updateList', (info) => {
+      console.log(info)
+      this.dataList = info
+      console.log(this.dataList)
     })
   },
   methods: {
@@ -84,6 +97,40 @@ export default {
       if (this.role !== 'Change Role') {
         this.selectedRole = this.role
       }
+    },
+    togglePage () {
+      ourEventBus.$emit('togglePage')
+    },
+    updateList () {
+      let searchQuery = this.searchInput
+      let fullData = this.dataList
+      console.log(searchQuery)
+      if (searchQuery) {
+        console.log('Yes')
+        let filteredData = fullData.filter(el => {
+          return el.first.toLowerCase().includes(searchQuery.toLowerCase()) || el.last.toLowerCase().includes(searchQuery.toLowerCase())
+        })
+        console.table(filteredData)
+        if (filteredData.length !== 0) {
+          ourEventBus.$emit('filteredData', filteredData)
+        } else {
+          console.error('Nothing to see here')
+        }
+      } else {
+        ourEventBus.$emit('filteredData', 'No data')
+      }
+    },
+    watch () {
+      // searchInput (val) {
+      //    console.log(val)
+      // let searchQuery = val
+      // let fullData = dataList
+      // let filteredData = fullData.filter(el => {
+      //   el['first'].includes(searchQuery) || el['last'].includes(searchQuery)
+      // })
+      // console.log(filteredData)
+      // ourEventBus.$emit('filteredData', filteredData)
+    //  }
     }
   }
 }
@@ -151,6 +198,15 @@ color: #013C61;
 input[type=search]{
   background: white url(../assets/search.png) 98% no-repeat;
   background-size: 20px;
+}
+.pagination{
+  font-size: 14px;
+}
+.right, .left{
+  background-color: #2BDA53;
+color: #fff;
+height: 20px;
+  border-radius: 50%;
 }
 @media only screen and (min-width: 780px){
   .mainBody{
