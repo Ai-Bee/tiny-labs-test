@@ -1,7 +1,7 @@
 /* eslint-disable no-return-assign */
 /* eslint-disable vue/return-in-computed-property */
 <template>
-<div>
+<div id='custom-table'>
   <div class="ml-1 pt-2 row px-3  table-head-row justify-content-between text-left">
        <div @click="selectAll()">
                    <span class="col-md-1" v-if="index || anyTruthy"> <img class="index" src="../assets/selected.png"> </span>
@@ -15,7 +15,7 @@
        <p  class="col-md-1"></p>
      </div>
      <section v-if="one">
-       <div v-for="(item, index) in data.slice(0,5)" class="ml-1 pt-2 px-3 row table-row justify-content-between" :key="index">
+       <div v-for="(item, index) in data" class="ml-1 pt-2 px-3 row table-row justify-content-between" :key="index">
             <div @click="toggleSelection(item)">
                    <span class="col-md-1" v-if="item.icon"> <img class="index" src="../assets/selected.png"> </span>
          <span class="col-md-1" v-else> <img class="index" src="../assets/deselected.png"> </span>
@@ -25,34 +25,22 @@
        <p  class="col">{{item.email}}</p>
        <p  class="col">{{item.number}}</p>
        <p  class="col">{{item.role}}</p>
-       <span class="col-md-1" @click="deleteRecord(item._id)"><img class="index" src="../assets/trash.png"></span>
-       </div>
-     </section>
-     <section v-else>
-        <div v-for="(item, index) in data.slice(6)" class="ml-1 pt-2 px-3 row table-row justify-content-between" :key="index">
-            <div @click="toggleSelection(item)">
-                   <span class="col-md-1" v-if="item.icon"> <img class="index" src="../assets/selected.png"> </span>
-         <span class="col-md-1" v-else> <img class="index" src="../assets/deselected.png"> </span>
-            </div>
-       <p  class="col">{{item.first}}</p>
-       <p  class="col"> {{item.last}}</p>
-       <p  class="col">{{item.email}}</p>
-       <p  class="col">{{item.number}}</p>
-       <p  class="col">{{item.role}}</p>
-       <span class="col-md-1" @click="deleteRecord(item._id)"><img class="index" src="../assets/trash.png"></span>
+       <span class="col-md-1" @click="deleteRecord(item.id)"><img class="index" src="../assets/trash.png"></span>
        </div>
      </section>
 </div>
 </template>
 
 <script>
-import axios from 'axios'
 import { ourEventBus } from '../main'
+// import firebase from 'firebase'
+import { db } from '../firebaseConfig'
 
 export default {
   name: 'tableComponent',
   props: {
-    selectedRole: String
+    selectedRole: String,
+    role: String
   },
   data () {
     return {
@@ -75,16 +63,34 @@ export default {
         this.index = true
       }
     },
-    deleteRecord (employeeId) {
-      console.log(employeeId)
-      axios.delete(`https://crudcrud.com/api/17df3ba5d3784cb887ec4d437a9f1a06/employees/${employeeId}`).then((res) => {
-        let temp = this.data
-        this.data = temp.filter(el => el._id !== employeeId)
-        this.temp = this.data
-        this.$emit('updateList', this.data)
-      }, (error) => {
-        console.log(error)
+    async updateStuff (val) {
+      let chosen = this.data.filter(el => el.icon)
+      console.log(chosen)
+      await chosen.map(el => {
+        db.collection('employees')
+          .doc(el.id)
+          .update({
+            role: val
+          })
+          .then(() => {
+            console.log('Document successfully updated!')
+            el.role = val
+          })
+          .catch((error) => {
+            console.error('Error updating document: ', error)
+          })
       })
+    },
+    deleteRecord (employeeId) {
+      db.collection('employees')
+        .doc(employeeId)
+        .delete()
+        .then(() => {
+          console.log('Document successfully deleted!')
+        })
+        .catch((error) => {
+          console.error('Error updating document: ', error)
+        })
     },
     toggleSelection (employee) {
       if (employee.icon) {
@@ -108,103 +114,60 @@ export default {
       if (this.data.length > 5) { this.one = !this.one }
     })
   },
-  mounted () {
-    let arrt = [
-      {
-        icon: true,
-        first: 'Joshua',
-        last: 'Bakare',
-        email: 'josh.bakery@gmail.com',
-        number: '+2348012345678',
-        role: 'Admin'
-      },
-      {
-        icon: false,
-        first: 'Josh',
-        last: 'Baks',
-        email: 'josh.bakery@gmail.com',
-        number: '+2348012345678',
-        role: 'Admin'
-      },
-      {
-        icon: true,
-        first: 'Pink',
-        last: 'Longhorn',
-        email: 'josh.bakery@gmail.com',
-        number: '+2348012345678',
-        role: 'Admin'
-      },
-      {
-        icon: false,
-        first: 'Mary',
-        last: 'Poppins',
-        email: 'josh.bakery@gmail.com',
-        number: '+2348012345678',
-        role: 'Admin'
-      },
-      {
-        icon: true,
-        first: 'Adeyinka',
-        last: 'Shuga',
-        email: 'josh.bakery@gmail.com',
-        number: '+2348012345678',
-        role: 'Admin'
-      },
-      {
-        icon: false,
-        first: 'Maryam',
-        last: 'Bature',
-        email: 'josh.bakery@gmail.com',
-        number: '+2348012345678',
-        role: 'Admin'
-      },
-      {
-        icon: true,
-        first: 'Nikki',
-        last: 'Reed',
-        email: 'josh.bakery@gmail.com',
-        number: '+2348012345678',
-        role: 'Admin'
-      },
-      {
-        icon: false,
-        first: 'Todd',
-        last: 'Dunley',
-        email: 'josh.bakery@gmail.com',
-        number: '+2348012345678',
-        role: 'Admin'
-      },
-      {
-        icon: false,
-        first: 'David',
-        last: 'Papaye',
-        email: 'josh.bakery@gmail.com',
-        number: '+2348012345678',
-        role: 'Admin'
-      }
-    ]
-    this.data = arrt
+  async mounted () {
+    db.collection('employees')
+      .get()
+      .then((querySnapshot) => {
+        querySnapshot.forEach((doc) => {
+          this.data.push({
+            id: doc.id,
+            first: doc.data().first,
+            last: doc.data().last,
+            number: doc.data().number,
+            role: doc.data().role,
+            icon: doc.data().selected,
+            email: doc.data().email
+          })
+        })
+        return this.data
+      })
+      .catch((error) => {
+        console.log('Error getting documents: ', error)
+      })
+
+    this.temp = await this.data
     ourEventBus.$emit('updateList', this.data)
-    this.temp = arrt
+    ourEventBus.$on('updatingRole', (val) => {
+      this.updateStuff(val)
+    })
+    ourEventBus.$on('addNewEmployee', (val) => {
+      db.collection('employees')
+        .add(
+          val
+        )
+        .then(() => {
+          console.log('Document successfully updated!')
+        })
+        .catch((error) => {
+          console.error('Error updating document: ', error)
+        })
+    })
+    // Pushing to firebase collection
     // arrt.map(el => {
-    //   axios
-    //     .post('https://crudcrud.com/api/17df3ba5d3784cb887ec4d437a9f1a06/employee', el)
-    //     .then(response => {
-    //       this.data.push(response.data)
-    //       console.log(response)
+    //   db.collection('employees')
+    //     .add(
+    //       el
+    //     )
+    //     .then(() => {
+    //       console.log('Document successfully updated!')
     //     })
-    // })
-    // axios.get('https://crudcrud.com/api/17df3ba5d3784cb887ec4d437a9f1a06/employees').then((response) => {
-    //   this.data = response.data
-    //   this.temp = arrt
-    //   // this.$emit('updateList', this.data)
-    // }, (error) => {
-    //   console.log(error)
+    //     .catch((error) => {
+    //       console.error('Error updating document: ', error)
+    //     })
     // })
   },
   computed: {
     // filteredNames: function () {
-    //   return this.data.filter((name)=>{
     //     return
     //   })
     // },
@@ -215,18 +178,12 @@ export default {
   },
   watch: {
     data (val) {
+      console.table(val)
+    },
+    async role (val) {
+
     },
     async selectedRole (val) {
-      let chosen = this.data.filter(el => el.icon)
-      console.log(chosen)
-      await chosen.map(el => {
-        el.role = val
-        axios.put(`https://crudcrud.com/api/17df3ba5d3784cb887ec4d437a9f1a06/employees/${el._id}`, el).then((response) => {
-          console.log(response)
-        }, (error) => {
-          console.log(error)
-        })
-      })
     }
   }
 }
@@ -244,5 +201,10 @@ export default {
 }
 .table-head-row{
      font-size: 14px;
+}
+@media only screen and (max-width: 600px){
+  div#custom-table{
+
+}
 }
 </style>

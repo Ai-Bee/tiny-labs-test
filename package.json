@@ -16,7 +16,9 @@
     "axios": "^0.19.2",
     "bootstrap": "^4.5.2",
     "bootstrap-vue": "^2.16.0",
+    "firebase": "^7.17.2",
     "jquery": "^3.5.1",
+    "style-loader": "^1.2.1",
     "vue": "^2.5.2",
     "vue-router": "^3.0.1",
     "vue-style-loader": "^4.1.2"

@@ -34,7 +34,7 @@
         <div class="mainBody">
             <div class="row justify-content-md-between pt-4 mb-4">
                 <h4>Employees</h4>
-                <button type="button" class="btn btn-success">Add New</button>
+                <button type="button" class="btn btn-success" data-toggle="modal" data-target="#formModal">Add New</button>
             </div>
             <div class="row companyName justify-content-md-between border py-4 px-3 my-4">
                 <h4>Josh Bakery Ventures</h4>
@@ -50,13 +50,51 @@
                 <button type="button" class="col mx-2 btn btn-success" @click="updateRole(role)">Change</button>
                 <input type="search" v-model="searchInput" @input="updateList" class="col-md-6 form-control" placeholder="Enter staff name here…" >
               </div>
-              <div class="col-md-2 pagination">
-                <!--  eslint-disable-next-line vue/no-parsing-error -->
-                 <span class="left mx-2 px-1" @click="togglePage"><</span><span @click="togglePage" class="px-1 right">></span>
-              </div>
             </div>
-            <table-component :selectedRole="selectedRole" ></table-component>
+            <table-component :selectedRole="selectedRole" :role="role" ></table-component>
         </div>
+        <div class="modal fade p-4" id="formModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content p-4">
+      <div class="modal-header my-2">
+        <h5 class="modal-title text-primary" id="exampleModalLabel">Add New Employee</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+     <form>
+  <div class="row p-2">
+    <div class="col px-2">
+      <input v-model="newEmployee.first" required type="text" class="form-control" placeholder="First name">
+    </div>
+    <div class="col px-2">
+      <input v-model="newEmployee.last" required type="text" class="form-control" placeholder="Last name">
+    </div>
+  </div>
+  <div class="row p-2">
+    <div class="col px-2">
+      <input type="email" v-model="newEmployee.email" required class="form-control" placeholder="Email">
+    </div>
+    <div class="col px-2">
+      <input type="number" v-model="newEmployee.number" required class="form-control" placeholder="Phone Number">
+    </div>
+  </div>
+  <div class="row py-2">
+    <div class="col-sm-6">
+      <label>Select Role</label>
+      <select class="custom-select" required v-model="newEmployee.role">
+  <option value="Admin" selected>Admin</option>
+  <option value="Staff">Staff</option>
+</select>
+    </div>
+  </div>
+</form>
+ <div class="modal-footer my-2">
+        <button type="button" class="btn btn-primary"  @click="addNewEmployee">Add</button>
+      </div>
+    </div>
+  </div>
+</div>
      </div>
 </template>
 
@@ -70,11 +108,19 @@ export default {
   },
   data: function () {
     return {
-      username: 'Fool',
+      username: 'Olive',
       role: 'Change Role',
       selectedRole: '',
       searchInput: '',
-      dataList: []
+      dataList: [],
+      newEmployee: {
+        first: '',
+        last: '',
+        email: '',
+        number: '',
+        role: 'Admin',
+        selected: true
+      }
     }
   },
   async mounted () {
@@ -93,9 +139,20 @@ export default {
     })
   },
   methods: {
+    addNewEmployee () {
+      if (this.newEmployee['first'] && this.newEmployee['last'] && this.newEmployee['email'] && this.newEmployee['number']) {
+        ourEventBus.$emit('addNewEmployee', this.newEmployee)
+        this.newEmployee['first'] = ''
+        this.newEmployee['last'] = ''
+        this.newEmployee['email'] = ''
+        this.newEmployee['number'] = ''
+        this.newEmployee['role'] = 'Select Role'
+      }
+    },
     updateRole () {
       if (this.role !== 'Change Role') {
         this.selectedRole = this.role
+        ourEventBus.$emit('updatingRole', this.selectedRole)
       }
     },
     togglePage () {
@@ -140,6 +197,8 @@ export default {
 <style scoped>
 #wholePage{
   background-color: #E5E5E5;
+  height: 100vh;
+  overflow-y: scroll;
 }
 .sidebar {
   background-color: #fff;
